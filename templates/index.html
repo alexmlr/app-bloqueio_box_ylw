@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bloqueios de Box — Yellow Self Storage</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="text-center mb-3">
+        <img src="{{ url_for('static', filename='img/logo_head.svg') }}" alt="Logo Yellow Self Storage" height="60">
+      </div>
+      <h1 class="mb-3 header_ylw" style="text-align: center;">Bloqueios de Box — Yellow Self Storage</h1>
+      <div class="text-center mb-3"><sub>Desenvolvido por Alex Rocha - Yellow Self Storage 2025</sub></div>
+      <p class="text-muted">Envie os 10 arquivos (.xlsx) — 5 da semana anterior e 5 da semana atual. O nome deve conter a unidade e a data no formato <code>DD.MM</code> (também aceito 1 dígito).</p>
+    
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-warning">{{ messages[0] }}</div>
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" enctype="multipart/form-data" class="mb-4 d-flex gap-2">
+        <input class="form-control" type="file" name="files" accept=".xlsx" multiple required>
+        <button class="btn btn-primary" type="submit">Analisar</button>
+      </form>
+
+
+      {% if resultado %}
+        <hr>
+        <h2 class="h4 mb-3">Resultado</h2>
+
+        {% for unidade, info in resultado.items() %}
+          {% if unidade != "_diag" %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <h3 class="h5 mb-2">Unidade {{ unidade }}</h3>
+              {% if info.datas and (info.datas.anterior or info.datas.atual) %}
+                <p class="text-muted small mb-3">Comparação: {{ info.datas.anterior or '?' }} → {{ info.datas.atual or '?' }}</p>
+              {% endif %}
+
+              <div class="row">
+                <div class="col-md-6">
+                  <h4 class="h6">Bloquear</h4>
+                  {% if info.bloquear %}
+                    <ul class="mb-3">
+                      {% for b in info.bloquear %}<li>Box {{ b }} — <strong>Bloquear</strong></li>{% endfor %}
+                    </ul>
+                  {% else %}
+                    <p class="text-muted">Sem novos bloqueios.</p>
+                  {% endif %}
+                </div>
+                <div class="col-md-6">
+                  <h4 class="h6">Desbloquear</h4>
+                  {% if info.desbloquear %}
+                    <ul class="mb-3">
+                      {% for b in info.desbloquear %}<li>Box {{ b }} — <strong>Desbloquear</strong></li>{% endfor %}
+                    </ul>
+                  {% else %}
+                    <p class="text-muted">Sem desbloqueios.</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        {% if resultado._diag %}
+          <div class="mt-4">
+            <h3 class="h6 text-muted">Diagnóstico de arquivos reconhecidos</h3>
+            <p class="small text-muted">Datas detectadas: <strong>{{ resultado._diag.anterior or '?' }}</strong> → <strong>{{ resultado._diag.atual or '?' }}</strong></p>
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered">
+                <thead>
+                  <tr>
+                    <th>Unidade</th>
+                    <th>Data</th>
+                    <th>Arquivos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in resultado._diag.detalhes.files %}
+                    <tr>
+                      <td>{{ row.unidade or 'NÃO RECONHECIDA' }}</td>
+                      <td>{{ row.data or 'SEM DATA' }}</td>
+                      <td>{{ row.qtde }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="small text-muted">Se alguma linha aparecer como “NÃO RECONHECIDA” ou “SEM DATA”, verifique o nome do arquivo (unidade e data).</p>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </body>
+</html>
